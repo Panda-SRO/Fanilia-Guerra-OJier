@@ -1,6 +1,6 @@
-# Repuesto Gerra Ojier
+# Workshop Castillo Ojier
 
-Sitio web y panel administrativo para **Repuesto Gerra Ojier** — repuestos y servicio automotriz (Chile).
+Sitio web y panel administrativo para **Workshop Castillo Ojier** — repuestos y servicio automotriz (Chile).
 
 ## Qué incluye
 

@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Repuesto Gerra Ojier</title>
-<meta name="description" content="Repuesto Gerra Ojier — repuestos y servicio automotriz en Chile. Mantención, frenos, motor, diagnóstico y más. Agenda tu cita.">
+<title>Workshop Castillo Ojier</title>
+<meta name="description" content="Workshop Castillo Ojier — repuestos y servicio automotriz en Chile. Mantención, frenos, motor, diagnóstico y más. Agenda tu cita.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Repuesto Gerra Ojier — Repuestos y servicio automotriz">
+<meta property="og:title" content="Workshop Castillo Ojier — Repuestos y servicio automotriz">
 <meta property="og:description" content="Mantención, frenos, motor, diagnóstico y repuestos. Agenda tu cita con nosotros.">
-<meta property="og:site_name" content="Repuesto Gerra Ojier">
+<meta property="og:site_name" content="Workshop Castillo Ojier">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -349,7 +349,7 @@ const DEFAULT_SERVICES = [
 ];
 const DEFAULT_GALLERY = [];
 const DEFAULT_CONFIG = {
-  nombre:'Repuesto Gerra Ojier',
+  nombre:'Workshop Castillo Ojier',
   lema:'Repuestos y servicio automotriz',
   rut:'',
   giro:'Venta de repuestos y servicio automotriz',
@@ -772,7 +772,7 @@ function downloadICS(c){
   const dt=(c.fecha||'').replace(/-/g,''); const hm=(c.hora||'09:00').replace(':',''); const start=dt+'T'+hm+'00'; const [h,m]=(c.hora||'09:00').split(':').map(Number); let eh=(h+1); const end=dt+'T'+String(eh).padStart(2,'0')+String(m).padStart(2,'0')+'00';
   const uid=(c.id||newId('cita'))+'@gerra'; const now=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
   const summary='Cita '+bizConfig.nombre+(c.servicio?(' — '+c.servicio):''); const desc=[c.cliente,c.vehiculo,c.patente,c.notas].filter(Boolean).join(' / ');
-  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Gerra Ojier//Citas//ES','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+now,'DTSTART:'+start,'DTEND:'+end,'SUMMARY:'+summary,'DESCRIPTION:'+desc,'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Recordatorio de cita','END:VALARM','BEGIN:VALARM','TRIGGER:-PT1H','ACTION:DISPLAY','DESCRIPTION:Recordatorio de cita','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Castillo Ojier//Citas//ES','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+now,'DTSTART:'+start,'DTEND:'+end,'SUMMARY:'+summary,'DESCRIPTION:'+desc,'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Recordatorio de cita','END:VALARM','BEGIN:VALARM','TRIGGER:-PT1H','ACTION:DISPLAY','DESCRIPTION:Recordatorio de cita','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
   const blob=new Blob([ics],{type:'text/calendar'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cita-'+(slug(c.cliente)||'gerra')+'.ics'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000); toast('Recordatorio .ics descargado. Ábrelo para agregarlo al calendario del teléfono.');
 }
 
@@ -908,6 +908,3 @@ function handleAdminChange(e){
 </script>
 </body>
 </html>
-
-<!-- deploy 2026-09-13T20:04:35Z -->
-<!-- redeploy 203325 -->
