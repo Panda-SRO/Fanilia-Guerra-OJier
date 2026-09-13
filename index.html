@@ -129,6 +129,19 @@
   .services-note svg{color:var(--accent);flex-shrink:0;margin-top:2px;}
   .empty{padding:40px;text-align:center;color:var(--muted);font-size:15px;grid-column:1/-1;}
 
+  .book-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px;box-shadow:var(--shadow);max-width:780px;}
+  .book-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .book-form .full{grid-column:1/-1;}
+  @media (max-width:560px){.book-form{grid-template-columns:1fr;}}
+  .book-form .a-input,.book-form .a-select,.book-form .a-text{width:100%;padding:11px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);font-family:var(--sans);font-size:15px;}
+  .book-form .a-text{resize:vertical;min-height:60px;}
+  .book-form .a-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;display:block;}
+  .book-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .book-msg{font-size:14px;font-weight:600;}
+  .book-msg.ok{color:var(--ok);}
+  .book-msg.err{color:#d9503b;}
+  .badge.web{background:rgba(47,111,143,0.16);color:var(--steel);}
+
   .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
   @media (max-width:900px){.gallery-grid{grid-template-columns:1fr 1fr;}}
   .gal{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:4/3;background:var(--surface-2);border:1px solid var(--line);}
@@ -424,12 +437,28 @@ function galleryHTML(){
   return gallery.map(g=>'<figure class="gal">'+(g.img?'<img src="'+g.img+'" alt="'+esc(g.caption||'Trabajo')+'" loading="lazy">':'<div class="gal-ph">Sin imagen</div>')+(g.caption?'<figcaption class="cap">'+esc(g.caption)+'</figcaption>':'')+'</figure>').join('');
 }
 
+function bookServiceOpts(){ return '<option value="">— Elige un servicio (opcional) —</option>'+services.map(s=>'<option>'+esc(s.n)+'</option>').join(''); }
+async function submitBooking(){
+  const g=id=>document.getElementById(id);
+  const nombre=(g('bk-nombre').value||'').trim(), tel=(g('bk-tel').value||'').trim(), veh=(g('bk-veh').value||'').trim(), serv=g('bk-serv').value||'', fecha=g('bk-fecha').value||'', hora=g('bk-hora').value||'', notas=(g('bk-notas').value||'').trim();
+  const msg=g('bk-msg'); msg.className='book-msg';
+  if(!nombre||!tel||!fecha||!hora){ msg.textContent='Completa los campos obligatorios (*).'; msg.classList.add('err'); return; }
+  if(!fb){ msg.textContent='El sistema de reservas no está disponible ahora. Intenta más tarde o escríbenos por WhatsApp.'; msg.classList.add('err'); return; }
+  const bt=g('bk-send'); if(bt) bt.disabled=true; msg.textContent='Enviando…';
+  try{
+    const id=newId('web'); const data={cliente:nombre,telefono:tel,vehiculo:veh,patente:'',servicio:serv,fecha,hora,notas,estado:'pendiente',origen:'web'};
+    await Promise.race([fb.setDoc(fb.doc(fb.db,'taller_citas',id),data), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),20000))]);
+    g('book-form').reset(); g('bk-hora').value='10:00'; g('bk-fecha').min=todayISO();
+    msg.textContent='¡Solicitud enviada! Te contactaremos para confirmar tu hora. ✓'; msg.classList.add('ok');
+  }catch(ex){ msg.textContent='No se pudo enviar. Revisa tu conexión e intenta de nuevo.'; msg.classList.add('err'); }
+  finally{ if(bt) bt.disabled=false; }
+}
 function SHELL(){ const cfg=bizConfig; return ''
 +'<header><div class="wrap nav">'
 +'<a href="#inicio" class="brand" aria-label="'+esc(cfg.nombre)+' — inicio">'
 +'<svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="1" y="1" width="46" height="46" rx="10" fill="#14181d" stroke="#e63946" stroke-width="2"/><path d="M30 15a6 6 0 0 0-8 8l-9 9 4 4 9-9a6 6 0 0 0 8-8l-3.6 3.6-3-3z" fill="#e63946"/><circle cx="17" cy="31" r="1.6" fill="#f4a020"/></svg>'
 +'<span class="name"><b>'+esc(cfg.nombre)+'</b><span>'+esc(cfg.lema||'Servicio automotriz')+'</span></span></a>'
-+'<nav class="nav-links"><a href="#servicios">Servicios</a><a href="#trabajos">Trabajos</a><a href="#pasos">Cómo agendar</a><a href="#contacto">Contacto</a></nav>'
++'<nav class="nav-links"><a href="#servicios">Servicios</a><a href="#trabajos">Trabajos</a><a href="#agenda">Agendar</a><a href="#contacto">Contacto</a></nav>'
 +'<div class="nav-right"><button class="admin-btn'+(currentUser?' on':'')+'" id="open-admin" aria-label="Administración" title="Administración">'+lockSvg()+'</button>'
 +'<a href="#" data-wa data-wa-msg="Hola '+esc(cfg.nombre)+' 👋, quiero agendar una cita." class="btn btn-wa">'+waSvg(17)+' Agendar cita</a></div>'
 +'</div></header>'
@@ -438,7 +467,7 @@ function SHELL(){ const cfg=bizConfig; return ''
 +'<span class="hero-eyebrow">Repuestos y servicio automotriz · Chile</span>'
 +'<h1>Tu auto en <em>buenas manos</em>.</h1>'
 +'<p class="lead">En '+esc(cfg.nombre)+' cuidamos tu vehículo con trabajo honesto y repuestos de calidad: mantención, frenos, motor, diagnóstico y más. Agenda tu hora y despreocúpate.</p>'
-+'<div class="hero-ctas"><a href="#" data-wa data-wa-msg="Hola '+esc(cfg.nombre)+' 👋, quiero agendar una cita." class="btn btn-wa">'+waSvg(17)+' Agendar por WhatsApp</a><a href="#servicios" class="btn btn-ghost">Ver servicios</a></div>'
++'<div class="hero-ctas"><a href="#agenda" class="btn btn-accent">'+ic(I.cal,17)+' Agendar mi hora</a><a href="#servicios" class="btn btn-ghost">Ver servicios</a></div>'
 +'<div class="hero-badges"><div>'+ic(I.check,18)+'Presupuesto claro</div><div>'+ic(I.check,18)+'Repuestos con garantía</div><div>'+ic(I.check,18)+'Diagnóstico computarizado</div></div>'
 +'</div><div class="hero-art"><svg viewBox="0 0 320 260" fill="none" aria-hidden="true"><circle cx="160" cy="130" r="120" fill="#1b2228"/><circle cx="160" cy="130" r="120" fill="none" stroke="#e63946" stroke-width="2" opacity="0.4"/><path d="M60 158l14-40a16 16 0 0 1 15-11h82a16 16 0 0 1 13 7l24 34 16 5a10 10 0 0 1 7 9v18a6 6 0 0 1-6 6h-14" stroke="#e9eef2" stroke-width="6" fill="#20272e" stroke-linejoin="round"/><path d="M60 158h200" stroke="#e9eef2" stroke-width="6"/><path d="M74 118l12-30h60v30z" fill="#2f6f8f" opacity="0.6"/><path d="M150 88h30l20 30h-50z" fill="#2f6f8f" opacity="0.4"/><circle cx="102" cy="182" r="24" fill="#0e1114" stroke="#e9eef2" stroke-width="6"/><circle cx="102" cy="182" r="8" fill="#e63946"/><circle cx="214" cy="182" r="24" fill="#0e1114" stroke="#e9eef2" stroke-width="6"/><circle cx="214" cy="182" r="8" fill="#e63946"/><path d="M232 96l10-8 5 7-9 8z" fill="#f4a020"/></svg></div></div>'
 +'<div class="hero-stripe"></div>'
@@ -462,6 +491,19 @@ function SHELL(){ const cfg=bizConfig; return ''
 +'<div class="step"><div class="n">2</div><h3>Agenda tu hora</h3><p>Coordinamos día y hora. Recibirás un recordatorio de tu cita.</p></div>'
 +'<div class="step"><div class="n">3</div><h3>Listo</h3><p>Revisamos, te damos el presupuesto y dejamos tu vehículo a punto.</p></div>'
 +'</div></div></section>'
++'<section id="agenda" class="services"><div class="wrap"><div class="sec-head"><span class="eyebrow">Reserva en línea</span><h2>Agenda tu hora</h2><p>Completa el formulario y te contactamos para confirmar el día y la hora según disponibilidad.</p></div>'
++'<div class="book-wrap"><form id="book-form" class="book-form" novalidate>'
++'<div><label class="a-label" for="bk-nombre">Nombre y apellido *</label><input class="a-input" id="bk-nombre" autocomplete="name" required></div>'
++'<div><label class="a-label" for="bk-tel">Teléfono / WhatsApp *</label><input class="a-input" id="bk-tel" inputmode="tel" autocomplete="tel" required></div>'
++'<div><label class="a-label" for="bk-veh">Vehículo (marca y modelo)</label><input class="a-input" id="bk-veh" placeholder="Ej: Toyota Yaris 2018"></div>'
++'<div><label class="a-label" for="bk-serv">Servicio</label><select class="a-select" id="bk-serv">'+bookServiceOpts()+'</select></div>'
++'<div><label class="a-label" for="bk-fecha">Día preferido *</label><input class="a-input" type="date" id="bk-fecha" min="'+todayISO()+'" required></div>'
++'<div><label class="a-label" for="bk-hora">Hora preferida *</label><input class="a-input" type="time" id="bk-hora" value="10:00" required></div>'
++'<div class="full"><label class="a-label" for="bk-notas">Comentario (opcional)</label><textarea class="a-text" id="bk-notas" placeholder="Cuéntanos qué necesita tu vehículo"></textarea></div>'
++'<div class="full book-actions"><button type="submit" class="btn btn-accent" id="bk-send">'+ic(I.cal,17)+' Solicitar hora</button><span class="book-msg" id="bk-msg"></span></div>'
++'</form></div>'
++'<p class="services-note">'+ic(I.info,20)+' Tu solicitud queda registrada y te contactamos para confirmar. No es un pago ni un compromiso.</p>'
++'</div></section>'
 +'<section id="contacto"><div class="wrap"><div class="sec-head"><span class="eyebrow">Visítanos o escríbenos</span><h2>Contacto y ubicación</h2></div><div class="contact-grid">'
 +'<div class="info-card">'
 +'<div class="info-row">'+ic(I.pin,22)+'<div><b>Dirección</b><span>'+esc(cfg.direccion||'Por confirmar')+'</span></div></div>'
@@ -507,6 +549,7 @@ document.addEventListener('click', e=>{
   const tb=e.target.closest && e.target.closest('.tab'); if(tb){ adminTab=tb.getAttribute('data-tab'); renderPanel(); return; }
   if(handleAdminClick(e)) return;
 });
+document.addEventListener('submit', e=>{ if(e.target && e.target.id==='book-form'){ e.preventDefault(); submitBooking(); } });
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.target.id==='login-pass'||e.target.id==='login-email')){ e.preventDefault(); doLogin(); } });
 document.addEventListener('input', e=>{ handleAdminInput(e); });
 document.addEventListener('change', e=>{ handleAdminChange(e); });
@@ -681,10 +724,11 @@ function drawCitaList(){
 }
 function citaHTML(c){
   const est=c.estado||'pendiente'; const badge=est==='realizada'?'<span class="badge done">Realizada</span>':est==='confirmada'?'<span class="badge conf">Confirmada</span>':'<span class="badge pend">Pendiente</span>';
+  const webBadge=c.origen==='web'?' <span class="badge web">Solicitud web</span>':'';
   const cls=['cita']; if(est==='realizada') cls.push('done'); else if(isSoon(c)) cls.push('soon');
   const tel=(c.telefono||'').replace(/[^0-9]/g,'');
   const remMsg='Hola '+(c.cliente||'')+' 👋, le recordamos su cita en '+bizConfig.nombre+' el '+fmtDateShort(c.fecha)+' a las '+(c.hora||'')+(c.servicio?(' para: '+c.servicio):'')+'. ¡Le esperamos!';
-  return '<div class="'+cls.join(' ')+'"><div class="cita-top"><div><b>'+esc(c.cliente||'Cliente')+'</b> '+badge+'<div class="meta">'+esc([c.vehiculo,c.patente].filter(Boolean).join(' · ')||'—')+'</div>'+(c.servicio?'<div class="meta">🔧 '+esc(c.servicio)+'</div>':'')+(c.notas?'<div class="meta">📝 '+esc(c.notas)+'</div>':'')+'</div><div class="when">'+esc(c.hora||'')+'</div></div>'
+  return '<div class="'+cls.join(' ')+'"><div class="cita-top"><div><b>'+esc(c.cliente||'Cliente')+'</b> '+badge+webBadge+'<div class="meta">'+esc([c.vehiculo,c.patente].filter(Boolean).join(' · ')||'—')+'</div>'+(c.servicio?'<div class="meta">🔧 '+esc(c.servicio)+'</div>':'')+(c.notas?'<div class="meta">📝 '+esc(c.notas)+'</div>':'')+'</div><div class="when">'+esc(c.hora||'')+'</div></div>'
     +'<div class="cita-acts">'
     +(tel?'<a class="btn-mini" href="'+waUrl(tel,remMsg)+'" target="_blank" rel="noopener">'+waSvg(14)+' Recordar por WhatsApp</a>':'')
     +'<button class="btn-mini" data-cita-ics="'+esc(c.id)+'">'+ic(I.cal,14)+' Recordatorio (.ics)</button>'
