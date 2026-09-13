@@ -400,6 +400,8 @@ let gallery = DEFAULT_GALLERY.slice();
 let bizConfig = Object.assign({}, DEFAULT_CONFIG);
 let citas = [];
 let facturas = [];
+let citasUnsub = null;
+let citasLoadedOnce = false;
 let fromDB = false;
 let fb = null;
 let fbState = FB_READY ? 'loading' : 'demo';
@@ -887,7 +889,7 @@ function handleAdminChange(e){
     const V='https://www.gstatic.com/firebasejs/10.12.2/';
     const [appMod,fsMod,authMod]=await Promise.all([import(V+'firebase-app.js'),import(V+'firebase-firestore.js'),import(V+'firebase-auth.js')]);
     const application=appMod.initializeApp(firebaseConfig); const db=fsMod.getFirestore(application); const auth=authMod.getAuth(application);
-    fb={db,auth,collection:fsMod.collection,getDocs:fsMod.getDocs,doc:fsMod.doc,setDoc:fsMod.setDoc,deleteDoc:fsMod.deleteDoc,writeBatch:fsMod.writeBatch,signInWithEmailAndPassword:authMod.signInWithEmailAndPassword,signOut:authMod.signOut,onAuthStateChanged:authMod.onAuthStateChanged};
+    fb={db,auth,collection:fsMod.collection,getDocs:fsMod.getDocs,doc:fsMod.doc,setDoc:fsMod.setDoc,deleteDoc:fsMod.deleteDoc,writeBatch:fsMod.writeBatch,onSnapshot:fsMod.onSnapshot,signInWithEmailAndPassword:authMod.signInWithEmailAndPassword,signOut:authMod.signOut,onAuthStateChanged:authMod.onAuthStateChanged};
     fbState='ready';
     { const ov=document.getElementById('admin-overlay'); if(ov&&!ov.hidden) renderPanel(); }
     // cargar datos públicos
@@ -899,8 +901,22 @@ function handleAdminChange(e){
     fb.onAuthStateChanged(auth,async u=>{
       currentUser=u; const b=document.getElementById('open-admin'); if(b) b.classList.toggle('on',!!u);
       adminServices=null; adminGallery=null; adminConfig=null;
-      if(u){ try{ const cs=await fb.getDocs(fb.collection(db,'taller_citas')); citas=cs.docs.map(d=>Object.assign({id:d.id},d.data())); }catch(ex){ citas=[]; console.warn('citas',ex); } try{ const fs=await fb.getDocs(fb.collection(db,'taller_facturas')); facturas=fs.docs.map(d=>Object.assign({id:d.id},d.data())); }catch(ex){ facturas=[]; console.warn('facturas',ex); } }
-      else { citas=[]; facturas=[]; }
+      if(citasUnsub){ try{ citasUnsub(); }catch(e){} citasUnsub=null; } citasLoadedOnce=false;
+      if(u){
+        try{ const fsx=await fb.getDocs(fb.collection(db,'taller_facturas')); facturas=fsx.docs.map(d=>Object.assign({id:d.id},d.data())); }catch(ex){ facturas=[]; console.warn('facturas',ex); }
+        citas=[];
+        try{
+          citasUnsub = fb.onSnapshot(fb.collection(db,'taller_citas'), snap=>{
+            const prev={}; citas.forEach(c=>{ prev[c.id]=1; });
+            citas = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+            const nuevos = citas.filter(c=>!prev[c.id]);
+            const ov=document.getElementById('admin-overlay');
+            if(ov && !ov.hidden && currentUser && adminTab==='citas' && !citaEdit) renderTabBody();
+            if(citasLoadedOnce){ const web=nuevos.filter(c=>c.origen==='web'); if(web.length){ toast('🔔 Nueva solicitud de cita'+(web.length>1?(' ('+web.length+')'):'')+(web[0].cliente?(' — '+web[0].cliente):'')); } }
+            citasLoadedOnce=true;
+          }, err=>{ console.warn('citas onSnapshot',err); });
+        }catch(ex){ console.warn('citas listener',ex); }
+      } else { citas=[]; facturas=[]; }
       const ov=document.getElementById('admin-overlay'); if(ov&&!ov.hidden) renderPanel();
     });
   }catch(ex){ console.warn('Firebase no disponible',ex); fb=null; fbState='failed'; const ov=document.getElementById('admin-overlay'); if(ov&&!ov.hidden) renderPanel(); }
