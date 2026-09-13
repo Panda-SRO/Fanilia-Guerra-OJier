@@ -427,7 +427,7 @@ function cardHTML(p){
     +'<div class="card-body"><h3>'+esc(p.n)+'</h3><div class="cat">'+esc(p.c)+'</div>'
     +'<p class="desc">'+esc(p.d)+'</p><div class="card-foot">'
     +'<div class="price">'+CLP(p.p)+'<small>desde · ref.</small></div>'
-    +'<a class="btn-order" data-wa-msg="'+esc(msg)+'" href="#">'+waSvg(15)+' Agendar</a>'
+    +'<a class="btn-order" data-book-serv="'+esc(p.n)+'" href="#agenda">'+ic(I.cal,15)+' Agendar</a>'
     +'</div></div></article>';
 }
 function gridHTML(list){ if(!list.length) return '<div class="empty">No hay servicios en esta categoría.</div>'; return list.map(cardHTML).join(''); }
@@ -460,7 +460,7 @@ function SHELL(){ const cfg=bizConfig; return ''
 +'<span class="name"><b>'+esc(cfg.nombre)+'</b><span>'+esc(cfg.lema||'Servicio automotriz')+'</span></span></a>'
 +'<nav class="nav-links"><a href="#servicios">Servicios</a><a href="#trabajos">Trabajos</a><a href="#agenda">Agendar</a><a href="#contacto">Contacto</a></nav>'
 +'<div class="nav-right"><button class="admin-btn'+(currentUser?' on':'')+'" id="open-admin" aria-label="Administración" title="Administración">'+lockSvg()+'</button>'
-+'<a href="#" data-wa data-wa-msg="Hola '+esc(cfg.nombre)+' 👋, quiero agendar una cita." class="btn btn-wa">'+waSvg(17)+' Agendar cita</a></div>'
++'<a href="#agenda" class="btn btn-accent">'+ic(I.cal,17)+' Agendar cita</a></div>'
 +'</div></header>'
 +'<main>'
 +'<section id="inicio" class="hero"><div class="wrap hero-inner"><div>'
@@ -487,7 +487,7 @@ function SHELL(){ const cfg=bizConfig; return ''
 +'<div class="gallery-grid" id="gallery">'+galleryHTML()+'</div>'
 +'</div></section>'
 +'<section id="pasos" class="steps"><div class="wrap"><div class="sec-head"><span class="eyebrow">Fácil y rápido</span><h2>Cómo agendar</h2><p>En tres pasos dejas tu auto en buenas manos.</p></div><div class="steps-grid">'
-+'<div class="step"><div class="n">1</div><h3>Cuéntanos</h3><p>Escríbenos por WhatsApp qué necesita tu auto o elige un servicio del catálogo.</p></div>'
++'<div class="step"><div class="n">1</div><h3>Cuéntanos</h3><p>Elige un servicio del catálogo o completa el formulario de reserva con lo que necesita tu auto.</p></div>'
 +'<div class="step"><div class="n">2</div><h3>Agenda tu hora</h3><p>Coordinamos día y hora. Recibirás un recordatorio de tu cita.</p></div>'
 +'<div class="step"><div class="n">3</div><h3>Listo</h3><p>Revisamos, te damos el presupuesto y dejamos tu vehículo a punto.</p></div>'
 +'</div></div></section>'
@@ -511,14 +511,14 @@ function SHELL(){ const cfg=bizConfig; return ''
 +(cfg.email?'<div class="info-row">'+ic(I.mail,22)+'<div><b>Correo</b><span>'+esc(cfg.email)+'</span></div></div>':'')
 +'<div class="info-row hours" style="display:block;"><b style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">'+ic(I.clock,22)+' Horario de atención</b><div class="h"><span class="d">Lunes a Viernes</span><span class="t">9:00 – 19:00</span></div><div class="h"><span class="d">Sábado</span><span class="t">9:00 – 14:00</span></div><div class="h"><span class="d">Domingo</span><span class="t">Cerrado</span></div></div>'
 +'</div>'
-+'<div class="cta-card"><h3>¿Tu auto necesita revisión?</h3><p>Escríbenos por WhatsApp y coordinamos tu hora. Diagnóstico honesto y presupuesto sin compromiso.</p><a href="#" data-wa data-wa-msg="Hola '+esc(cfg.nombre)+' 👋, quiero agendar una cita." class="btn btn-wa" style="align-self:flex-start;">'+waSvg(18)+' Escribir por WhatsApp</a><p class="pill-note">Atendemos todas las marcas y modelos.</p></div>'
++'<div class="cta-card"><h3>¿Tu auto necesita revisión?</h3><p>Agenda tu hora en línea y coordinamos la revisión de tu auto. Diagnóstico honesto y presupuesto sin compromiso.</p><a href="#agenda" class="btn btn-accent" style="align-self:flex-start;">'+ic(I.cal,18)+' Agendar mi hora</a><p class="pill-note">Atendemos todas las marcas y modelos.</p></div>'
 +'</div></div></section>'
 +'</main>'
 +'<footer><div class="wrap"><div class="foot-grid">'
 +'<div class="foot-brand"><svg class="mark" width="42" height="42" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="1" y="1" width="46" height="46" rx="10" fill="#20272e" stroke="#e63946" stroke-width="2"/><path d="M30 15a6 6 0 0 0-8 8l-9 9 4 4 9-9a6 6 0 0 0 8-8l-3.6 3.6-3-3z" fill="#e63946"/></svg><span class="name"><b>'+esc(cfg.nombre)+'</b><br><span style="font-size:13px;color:#a9b6bf;">'+esc(cfg.lema||'Servicio automotriz')+'</span></span></div>'
 +'<div class="foot-links"><a href="#servicios">Servicios</a><a href="#trabajos">Trabajos</a><a href="#contacto">Contacto</a></div>'
 +'</div><div class="foot-bottom"><span>© '+new Date().getFullYear()+' '+esc(cfg.nombre)+'.</span><span>Repuestos y servicio automotriz · Chile</span></div></div></footer>'
-+'<a data-wa data-wa-msg="Hola '+esc(cfg.nombre)+' 👋, quiero agendar una cita." class="wa-float" href="#" aria-label="Agendar por WhatsApp"><span class="lbl">¿Agendamos tu cita?</span>'+waSvg(33)+'</a>'
++'<a class="wa-float" href="#agenda" aria-label="Agendar tu hora"><span class="lbl">Agenda tu hora</span>'+ic(I.cal,30)+'</a>'
 +'<div id="toast" class="toast" role="status" aria-live="polite"></div>'
 +'<div id="admin-overlay" class="admin-overlay" hidden><div class="admin-panel" id="admin-panel"></div></div>';
 }
@@ -536,9 +536,10 @@ function waGo(msg){ if(!WA_ENABLED){ toast(WA_SOON_MSG); return; } window.open(w
 
 /* ============ EVENTOS ============ */
 document.addEventListener('click', e=>{
-  const wa=e.target.closest && e.target.closest('[data-wa],[data-wa-msg].btn-order,[data-wa]');
-  const waEl=e.target.closest && e.target.closest('[data-wa-msg]');
-  if(waEl && (waEl.matches('[data-wa]')||waEl.classList.contains('btn-order'))){ e.preventDefault(); waGo(waEl.getAttribute('data-wa-msg')); return; }
+  const bs=e.target.closest && e.target.closest('[data-book-serv]');
+  if(bs){ const sel=document.getElementById('bk-serv'); if(sel){ const v=bs.getAttribute('data-book-serv'); Array.from(sel.options).forEach(o=>{ if(o.value===v||o.textContent===v) sel.value=o.value; }); } /* el href="#agenda" hace el scroll */ }
+  const waEl=e.target.closest && e.target.closest('[data-wa]');
+  if(waEl){ e.preventDefault(); waGo(waEl.getAttribute('data-wa-msg')); return; }
   const f=e.target.closest && e.target.closest('.filter');
   if(f){ activeCat=f.getAttribute('data-cat'); document.querySelectorAll('.filter').forEach(b=>b.classList.toggle('active',b===f)); const grid=document.getElementById('grid'); if(grid) grid.innerHTML=gridHTML(activeCat==='Todos'?services:services.filter(p=>p.c===activeCat)); return; }
   if(e.target.closest && e.target.closest('#open-admin')){ e.preventDefault(); openAdmin(); return; }
