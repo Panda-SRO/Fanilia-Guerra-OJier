@@ -202,6 +202,14 @@
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--deep);color:#eef3f6;padding:14px 22px;border-radius:10px;font-weight:600;font-size:14.5px;box-shadow:0 10px 30px rgba(0,0,0,0.4);z-index:200;opacity:0;pointer-events:none;transition:.25s;max-width:calc(100vw - 32px);text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+  #pwa-install{position:fixed;left:16px;right:16px;bottom:88px;z-index:70;margin:0 auto;max-width:520px;display:none;align-items:center;gap:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,0.32);padding:12px 14px;}
+  #pwa-install img{width:46px;height:46px;border-radius:11px;flex-shrink:0;}
+  #pwa-install .txt{flex:1;min-width:0;font-size:13px;color:var(--muted);line-height:1.35;}
+  #pwa-install .txt b{display:block;font-family:var(--head);font-size:16px;color:var(--ink);text-transform:uppercase;letter-spacing:0.01em;margin-bottom:1px;}
+  #pwa-install .btn-install{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:11px 16px;font-family:var(--sans);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  #pwa-install .btn-install:hover{background:#d12f3c;}
+  #pwa-install .x{background:none;border:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;}
+
   /* ===== ADMIN ===== */
   .admin-overlay{position:fixed;inset:0;background:rgba(6,9,12,0.66);backdrop-filter:blur(3px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:22px 12px;overflow:auto;}
   .admin-panel{background:var(--surface);color:var(--ink);width:100%;max-width:940px;border-radius:14px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,0.5);border:1px solid var(--line);}
@@ -976,6 +984,35 @@ function handleAdminChange(e){
 </script>
 <script>
 if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+</script>
+<script>
+(function(){
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(standalone) return; /* ya está instalada */
+  var dismissed = false; try{ dismissed = localStorage.getItem('wco_pwa_dismiss')==='1'; }catch(e){}
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var deferred = null, el = null;
+  function build(){
+    if(el) return el;
+    el = document.createElement('div'); el.id='pwa-install';
+    el.innerHTML = '<img src="icon-192.png" alt=""><div class="txt"><b>Instalar app</b><span>Agrega Workshop Castillo Ojier a tu teléfono.</span></div><button class="btn-install" type="button">Instalar</button><button class="x" type="button" aria-label="Cerrar">×</button>';
+    document.body.appendChild(el);
+    el.querySelector('.x').addEventListener('click', function(){ hide(); try{ localStorage.setItem('wco_pwa_dismiss','1'); }catch(e){} });
+    el.querySelector('.btn-install').addEventListener('click', onInstall);
+    return el;
+  }
+  function show(){ if(dismissed) return; build().style.display='flex'; }
+  function hide(){ if(el) el.style.display='none'; }
+  function instrucciones(txt){ build(); el.querySelector('.txt').innerHTML='<b>Cómo instalar</b><span>'+txt+'</span>'; el.querySelector('.btn-install').style.display='none'; el.style.display='flex'; }
+  function onInstall(){
+    if(deferred){ deferred.prompt(); deferred.userChoice.then(function(c){ if(c&&c.outcome==='accepted') hide(); deferred=null; }); return; }
+    if(isIOS){ instrucciones('Toca el botón Compartir de Safari (cuadro con flecha ↑) y elige “Agregar a inicio”.'); return; }
+    instrucciones('Abre el menú del navegador (⋮) y elige “Instalar app” o “Agregar a pantalla de inicio”.');
+  }
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred=e; show(); });
+  window.addEventListener('appinstalled', function(){ hide(); deferred=null; try{ localStorage.setItem('wco_pwa_dismiss','1'); }catch(e){} });
+  if(isIOS){ window.addEventListener('load', function(){ setTimeout(show, 1400); }); }
+})();
 </script>
 </body>
 </html>
