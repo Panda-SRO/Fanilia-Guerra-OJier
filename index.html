@@ -9,6 +9,13 @@
 <meta property="og:title" content="Workshop Castillo Ojier — Repuestos y servicio automotriz">
 <meta property="og:description" content="Mantención, frenos, motor, diagnóstico y repuestos. Agenda tu cita con nosotros.">
 <meta property="og:site_name" content="Workshop Castillo Ojier">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14181d">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Castillo Ojier">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -966,6 +973,9 @@ function handleAdminChange(e){
     });
   }catch(ex){ console.warn('Firebase no disponible',ex); fb=null; fbState='failed'; const ov=document.getElementById('admin-overlay'); if(ov&&!ov.hidden) renderPanel(); }
 })();
+</script>
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 </script>
 </body>
 </html>
