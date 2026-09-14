@@ -798,14 +798,14 @@ function renderFacturas(){
     +'<button class="btn-mini" id="fac-additem" style="margin-top:8px;">+ Agregar línea</button>'
     +'<div class="totbox"><div class="r"><span>Neto</span><b id="t-neto">'+CLP(t.neto)+'</b></div><div class="r"><span>IVA 19%</span><b id="t-iva">'+CLP(t.iva)+'</b></div><div class="r grand"><span>Total</span><b id="t-total">'+CLP(t.total)+'</b></div></div>'
     +'<div class="full" style="margin-top:12px;"><label class="a-label">Notas (opcional)</label><textarea class="a-text" data-ff="notas">'+esc(facDraft.notas)+'</textarea></div>'
-    +'<div class="admin-actions"><button class="btn-primary" id="fac-save">Guardar</button><button class="btn-dark" id="fac-print">🖨️ Imprimir</button><button class="btn-dark" id="fac-pdf">📄 Exportar PDF</button><span class="save-status" id="save-status"></span></div>'
+    +'<div class="admin-actions"><button class="btn-primary" id="fac-save">Guardar</button><button class="btn-dark" id="fac-wa" style="background:var(--wa);color:#053;">'+waSvg(15)+' Guardar y enviar por WhatsApp</button><button class="btn-dark" id="fac-print">🖨️ Imprimir</button><button class="btn-dark" id="fac-pdf">📄 PDF</button><span class="save-status" id="save-status"></span></div>'
     +'<hr style="border:none;border-top:1px solid var(--line);margin:22px 0;">'
     +'<b style="font-family:var(--head);font-size:19px;">Historial de facturas</b><div id="fac-hist" style="margin-top:12px;"></div>';
   drawFacItems(); drawFacHist();
 }
 function drawFacItems(){ const w=document.getElementById('fac-items'); if(!w) return; w.innerHTML=(facDraft.items||[]).map((it,i)=>'<tr data-ii="'+i+'"><td><input data-if="d" data-ii="'+i+'" value="'+esc(it.d)+'" placeholder="Ej: Cambio de aceite"></td><td><input class="num" type="number" min="0" step="1" data-if="qty" data-ii="'+i+'" value="'+esc(it.qty)+'"></td><td><input class="num" type="number" min="0" step="500" data-if="price" data-ii="'+i+'" value="'+esc(it.price)+'"></td><td style="text-align:center;"><button class="it-x" data-fac-delitem="'+i+'" title="Quitar">×</button></td></tr>').join(''); }
 function refreshFacTotals(){ const t=facTotals(facDraft); const a=document.getElementById('t-neto'),b=document.getElementById('t-iva'),c=document.getElementById('t-total'); if(a)a.textContent=CLP(t.neto); if(b)b.textContent=CLP(t.iva); if(c)c.textContent=CLP(t.total); }
-function drawFacHist(){ const w=document.getElementById('fac-hist'); if(!w) return; if(!facturas.length){ w.innerHTML='<p class="save-status">Aún no hay facturas guardadas.</p>'; return; } const list=facturas.slice().sort((a,b)=>(b.folio||0)-(a.folio||0)); w.innerHTML=list.map(f=>'<div class="fact-hist"><div class="fh-main"><b>N° '+esc(f.folio)+' · '+esc(f.cliente||'—')+'</b><span>'+fmtDateShort(f.fecha)+' · '+CLP(f.total)+(f.vehiculo?(' · '+esc(f.vehiculo)):'')+'</span></div><div style="display:flex;gap:7px;flex-wrap:wrap;"><button class="btn-mini" data-fac-open="'+esc(f.id)+'">Ver / Imprimir</button><button class="btn-del" data-fac-del="'+esc(f.id)+'">Eliminar</button></div></div>').join(''); }
+function drawFacHist(){ const w=document.getElementById('fac-hist'); if(!w) return; if(!facturas.length){ w.innerHTML='<p class="save-status">Aún no hay facturas guardadas.</p>'; return; } const list=facturas.slice().sort((a,b)=>(b.folio||0)-(a.folio||0)); w.innerHTML=list.map(f=>'<div class="fact-hist"><div class="fh-main"><b>N° '+esc(f.folio)+' · '+esc(f.cliente||'—')+'</b><span>'+fmtDateShort(f.fecha)+' · '+CLP(f.total)+(f.vehiculo?(' · '+esc(f.vehiculo)):'')+'</span></div><div style="display:flex;gap:7px;flex-wrap:wrap;"><button class="btn-mini" data-fac-wa="'+esc(f.id)+'" style="border-color:var(--wa);color:var(--ok);">'+waSvg(13)+' WhatsApp</button><button class="btn-mini" data-fac-open="'+esc(f.id)+'">Ver / Imprimir</button><button class="btn-del" data-fac-del="'+esc(f.id)+'">Eliminar</button></div></div>').join(''); }
 function nextFolio(){ let mx=0; facturas.forEach(f=>{ if((+f.folio||0)>mx) mx=+f.folio; }); return mx+1; }
 async function facSave(){
   const dr=facDraft; if(!String(dr.cliente||'').trim()){ status('Falta el nombre del cliente.'); return; }
@@ -813,7 +813,7 @@ async function facSave(){
   const t=facTotals({items}); const bt=document.getElementById('fac-save'); if(bt) bt.disabled=true; status('Guardando…');
   try{ const folio=nextFolio(); const id=newId('fac-'+folio); const data={folio,fecha:dr.fecha||todayISO(),cliente:String(dr.cliente).trim(),rut:String(dr.rut||'').trim(),telefono:String(dr.telefono||'').trim(),vehiculo:String(dr.vehiculo||'').trim(),patente:String(dr.patente||'').trim(),notas:String(dr.notas||'').trim(),items:items.map(it=>({d:String(it.d).trim(),qty:parseInt(it.qty,10)||0,price:parseInt(it.price,10)||0})),neto:t.neto,iva:t.iva,total:t.total,creada:Date.now()};
     await Promise.race([fb.setDoc(fb.doc(fb.db,'taller_facturas',id),data),new Promise((_,rej)=>setTimeout(()=>rej(Object.assign(new Error('timeout'),{code:'timeout'})),20000))]);
-    facturas.push(Object.assign({id},data)); status('¡Factura N° '+folio+' guardada! ✓'); const saved=Object.assign({id},data); facDraft=newDraft(); renderFacturas(); printInvoice(saved); }
+    const saved=Object.assign({id},data); facturas.push(saved); status('¡Factura N° '+folio+' guardada! ✓'); facDraft=newDraft(); renderFacturas(); return saved; }
   catch(ex){ status(saveErr(ex)); } finally{ const b=document.getElementById('fac-save'); if(b) b.disabled=false; }
 }
 async function facDelete(id){ if(!confirm('¿Eliminar esta factura del historial?')) return; try{ await fb.deleteDoc(fb.doc(fb.db,'taller_facturas',id)); facturas=facturas.filter(f=>f.id!==id); drawFacHist(); }catch(ex){ toast('No se pudo eliminar.'); } }
@@ -827,6 +827,49 @@ function invoiceHTML(f){ const cfg=bizConfig;
     +'<div class="inv-foot">Gracias por preferir '+esc(cfg.nombre)+'. Documento no tributario / comprobante interno.</div></div>';
 }
 function printInvoice(f){ const pa=document.getElementById('print-area'); if(!pa) return; pa.innerHTML=invoiceHTML(f); window.print(); }
+/* ---- PDF real de la factura (jsPDF, se carga solo al usar) ---- */
+function ensureJsPDF(){ return new Promise((res,rej)=>{ if(window.jspdf&&window.jspdf.jsPDF) return res(window.jspdf.jsPDF); const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload=()=>{ if(window.jspdf&&window.jspdf.jsPDF) res(window.jspdf.jsPDF); else rej(new Error('jsPDF')); }; s.onerror=rej; document.head.appendChild(s); }); }
+function invoicePdfDoc(JsPDF,f){ const cfg=bizConfig; const doc=new JsPDF({unit:'pt',format:'a4'}); const M=40,W=595; let y=52;
+  doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(20,24,29); doc.text(String(cfg.nombre||''),M,y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90); let hy=y+16;
+  [cfg.giro,cfg.rut?('RUT: '+cfg.rut):'',cfg.direccion,cfg.telefono?('Tel: '+cfg.telefono):'',cfg.email].filter(Boolean).forEach(l=>{ doc.text(String(l),M,hy); hy+=12; });
+  doc.setTextColor(230,57,70); doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text('FACTURA / BOLETA',W-M,y,{align:'right'});
+  doc.setTextColor(50); doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('N° '+f.folio,W-M,y+16,{align:'right'}); doc.text('Fecha: '+fmtDateShort(f.fecha),W-M,y+30,{align:'right'});
+  y=Math.max(hy,y+40)+6; doc.setDrawColor(230,57,70); doc.setLineWidth(2); doc.line(M,y,W-M,y); y+=22;
+  doc.setFontSize(9); doc.setTextColor(120); doc.setFont('helvetica','bold'); doc.text('CLIENTE',M,y); doc.text('VEHÍCULO',W/2,y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(20); doc.setFontSize(10);
+  let cy=y+14; [f.cliente||'—',f.rut?('RUT: '+f.rut):'',f.telefono?('Tel: '+f.telefono):''].filter(Boolean).forEach(l=>{ doc.text(String(l),M,cy); cy+=13; });
+  let vy=y+14; [f.vehiculo||'—',f.patente?('Patente: '+f.patente):''].filter(Boolean).forEach(l=>{ doc.text(String(l),W/2,vy); vy+=13; });
+  y=Math.max(cy,vy)+16;
+  doc.setFillColor(20,24,29); doc.rect(M,y-12,W-2*M,20,'F'); doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  const colQ=W-M-190,colP=W-M-110,colS=W-M; doc.text('DETALLE',M+6,y+2); doc.text('CANT.',colQ,y+2,{align:'right'}); doc.text('P. UNIT.',colP,y+2,{align:'right'}); doc.text('SUBTOTAL',colS-6,y+2,{align:'right'});
+  y+=24; doc.setTextColor(30); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  (f.items||[]).forEach(it=>{ const d=doc.splitTextToSize(String(it.d),colQ-M-20); doc.text(d,M+6,y); doc.text(String(it.qty),colQ,y,{align:'right'}); doc.text(CLP(it.price),colP,y,{align:'right'}); doc.text(CLP((it.qty||0)*(it.price||0)),colS-6,y,{align:'right'}); const h=Math.max(1,d.length)*12; doc.setDrawColor(230); doc.setLineWidth(0.5); doc.line(M,y+h-4,W-M,y+h-4); y+=h+8; });
+  y+=6; const tx=W-M,lx=W-M-160; doc.setFontSize(10); doc.setTextColor(30);
+  doc.text('Neto',lx,y); doc.text(CLP(f.neto),tx,y,{align:'right'}); y+=16;
+  doc.text('IVA 19%',lx,y); doc.text(CLP(f.iva),tx,y,{align:'right'}); y+=8;
+  doc.setDrawColor(80); doc.setLineWidth(1); doc.line(lx,y,tx,y); y+=18;
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(230,57,70); doc.text('TOTAL',lx,y); doc.text(CLP(f.total),tx,y,{align:'right'}); y+=26;
+  if(f.notas){ doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(60); doc.text(doc.splitTextToSize('Notas: '+f.notas,W-2*M),M,y); }
+  doc.setFontSize(8); doc.setTextColor(120); doc.text('Gracias por preferir '+String(cfg.nombre||'')+'. Documento no tributario / comprobante interno.',W/2,815,{align:'center'});
+  return doc;
+}
+async function sendInvoiceWA(f){
+  if(!f) return; toast('Generando PDF…');
+  let JsPDF; try{ JsPDF=await ensureJsPDF(); }catch(e){ toast('No se pudo cargar el generador de PDF. Revisa tu internet.'); return; }
+  let blob; try{ blob=invoicePdfDoc(JsPDF,f).output('blob'); }catch(e){ console.error(e); toast('No se pudo generar el PDF.'); return; }
+  const fname='Factura-'+f.folio+'-'+(slug(f.cliente)||'cliente')+'.pdf';
+  const file=new File([blob],fname,{type:'application/pdf'});
+  const text='Hola '+(f.cliente||'')+' 👋, le adjuntamos su factura de '+bizConfig.nombre+' (N° '+f.folio+') por '+CLP(f.total)+'. ¡Gracias por su preferencia!';
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],text:text}); return; }
+    catch(err){ if(err&&err.name==='AbortError') return; }
+  }
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+  const tel=(f.telefono||'').replace(/[^0-9]/g,'');
+  if(tel){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(text),'_blank','noopener'); toast('PDF descargado. Adjúntalo en el chat de WhatsApp que se abrió (ícono del clip 📎).'); }
+  else { toast('PDF descargado. Adjúntalo en WhatsApp desde el clip 📎.'); }
+}
 
 /* ============ DELEGACIÓN ADMIN ============ */
 function handleAdminClick(e){
@@ -859,6 +902,8 @@ function handleAdminClick(e){
   if(t.id==='fac-additem'){ facDraft.items.push({d:'',qty:1,price:0}); drawFacItems(); return true; }
   if(t.id==='fac-clear'){ facDraft=newDraft(); renderFacturas(); return true; }
   if(t.id==='fac-save'){ facSave(); return true; }
+  if(t.id==='fac-wa'){ facSave().then(s=>{ if(s) sendInvoiceWA(s); }); return true; }
+  let fw=t.closest && t.closest('[data-fac-wa]'); if(fw){ const f=facturas.find(x=>x.id===fw.getAttribute('data-fac-wa')); if(f) sendInvoiceWA(f); return true; }
   if(t.id==='fac-print'||t.id==='fac-pdf'){ const items=(facDraft.items||[]).filter(it=>String(it.d||'').trim()); if(!items.length){ status('Agrega al menos una línea para imprimir.'); return true; } const tt=facTotals({items}); printInvoice({folio:'—',fecha:facDraft.fecha,cliente:facDraft.cliente,rut:facDraft.rut,telefono:facDraft.telefono,vehiculo:facDraft.vehiculo,patente:facDraft.patente,notas:facDraft.notas,items:items.map(it=>({d:it.d,qty:parseInt(it.qty,10)||0,price:parseInt(it.price,10)||0})),neto:tt.neto,iva:tt.iva,total:tt.total}); if(t.id==='fac-pdf') toast('En el diálogo de impresión, elige “Guardar como PDF”.'); return true; }
   let fdi=t.closest && t.closest('[data-fac-delitem]'); if(fdi){ const i=+fdi.getAttribute('data-fac-delitem'); facDraft.items.splice(i,1); if(!facDraft.items.length) facDraft.items.push({d:'',qty:1,price:0}); drawFacItems(); refreshFacTotals(); return true; }
   let fo=t.closest && t.closest('[data-fac-open]'); if(fo){ const f=facturas.find(x=>x.id===fo.getAttribute('data-fac-open')); if(f) printInvoice(f); return true; }
